@@ -1,62 +1,120 @@
-import React from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "/src/App.css";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+} from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, db } from "../src/firebase";
 
 export default function Login() {
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const [name, setName] = useState("");
+  const [roll, setRoll] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate('/workspace');
+    setError("");
+    setLoading(true);
+
+    if (!name || !roll || !email || !password) {
+      setError("All fields are required");
+      setLoading(false);
+      return;
+    }
+
+    let userCredential;
+
+    try {
+      userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+    } catch (err) {
+      if (err.code === "auth/user-not-found") {
+        userCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+      } else {
+        setError(err.message);
+        setLoading(false);
+        return;
+      }
+    }
+
+    const uid = userCredential.user.uid;
+    const ref = doc(db, "users", uid);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      await setDoc(ref, {
+        name,
+        roll,
+        email,
+        score: 0,
+        createdAt: new Date(),
+      });
+    }
+
+    navigate("/workspace");
+    setLoading(false);
   };
 
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-base-200">
+    <div className="h-screen flex items-center justify-center bg-base-200">
       <div className="card w-96 bg-base-100 shadow-xl">
         <div className="card-body">
-          <h2 className="text-2xl font-light text-center mb-4 tracking-[0.5em]">LOGIN</h2>
+          <h2 className="text-center tracking-widest text-xl">
+            LOGIN / SIGN UP
+          </h2>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div>
-              <label className="label">
-                <span className="label-text">Email</span>
-              </label>
-              <input
-                name="email"
-                type="email"
-                placeholder="Enter your VIT email (eg. your.name@vit.edu.in)"
-                className="input input-bordered w-full"
-                required
-              />
-            </div>
+          {error && <div className="alert alert-error">{error}</div>}
 
-            <div>
-              <label className="label">
-                <span className="label-text">Name</span>
-              </label>
-              <input
-                name="name"
-                type="text"
-                placeholder="Enter Your Name (eg. Shivam Salkar)"
-                className="input input-bordered w-full"
-                required
-              />
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <input
+              className="input input-bordered w-full"
+              placeholder="Full Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
 
-            <div>
-              <label className="label">
-                <span className="label-text">Roll No.</span>
-              </label>
-              <input
-                name="roll"
-                type="text"
-                placeholder="Enter your Roll No. (eg. 25102C0026)"
-                className="input input-bordered w-full"
-                required
-              />
-            </div>
+            <input
+              className="input input-bordered w-full"
+              placeholder="Roll Number"
+              value={roll}
+              onChange={(e) => setRoll(e.target.value)}
+            />
 
-            <button type="submit" className="btn btn-primary w-full mt-4">Login</button>
+            <input
+              className="input input-bordered w-full"
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+
+            <input
+              className="input input-bordered w-full"
+              type="password"
+              placeholder="Password (min 6 chars)"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+
+            <button
+              className="btn btn-primary w-full"
+              disabled={loading}
+            >
+              {loading ? "Please wait..." : "Continue"}
+            </button>
           </form>
         </div>
       </div>

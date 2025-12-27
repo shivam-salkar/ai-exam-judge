@@ -1,13 +1,50 @@
 import { useState } from "react";
 import { Editor } from "@monaco-editor/react";
 import axios from "axios";
+import { auth } from "../src/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import {db} from "../src/firebase"
+import { useEffect } from "react";
+
 
 function Workspace() {
   const [value, setValue] = useState("");
   const [outputText, setOutputText] = useState("");
   const [inputText, setInputText] = useState("");
+  const [userID, setUserID] = useState("");
+  const [userName, setUserName] = useState("");
+  const [rollNo, setRollNo] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+
 
   const isMobile = window.innerWidth < 768;
+
+  onAuthStateChanged(auth, (firebaseUser) => {
+    setUserID(firebaseUser.uid);
+  });
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser) return;
+  
+      const uid = firebaseUser.uid;
+      setUserID(uid);
+  
+      const ref = doc(db, "users", uid);
+      const snap = await getDoc(ref);
+  
+      if (snap.exists()) {
+        const data = snap.data();
+        setUserName(data.name);
+        setRollNo(data.roll);
+        setUserEmail(data.email);
+      }
+    });
+  
+    return () => unsub();
+  }, []);
+  
 
   const runCode = async () => {
     try {
