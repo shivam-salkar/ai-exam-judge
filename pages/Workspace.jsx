@@ -4,12 +4,14 @@ import axios from "axios";
 
 function Workspace() {
   const [value, setValue] = useState("");
-  const [outputText, setOuputText] = useState("");
+  const [outputText, setOutputText] = useState("");
+  const [inputText, setInputText] = useState("");
 
   const isMobile = window.innerWidth < 768;
 
   const runCode = async () => {
     try {
+      console.log("INPUT SENT TO PISTON:", JSON.stringify(inputText));
       const res = await axios.post("https://emkc.org/api/v2/piston/execute", {
         language: "c",
         version: "10.2.0",
@@ -19,10 +21,15 @@ function Workspace() {
             content: value,
           },
         ],
+        stdin: inputText,
       });
-      setOuputText(res.data.run.output);
+      const { run } = res.data;
+      const combinedOutput = [run?.stdout, run?.stderr]
+        .filter(Boolean)
+        .join(run?.stdout && run?.stderr ? "\n" : "");
+      setOutputText(combinedOutput);
     } catch (error) {
-      setOuputText("Error running code. \n " + error);
+      setOutputText("Error running code. \n " + error);
     }
   };
 
@@ -66,7 +73,7 @@ function Workspace() {
               height="75vh"
               defaultLanguage="c"
               theme="vs-dark"
-              defaultValue="//Write your code here."
+              // defaultValue="//Write your code here."
               value={value}
               onChange={(value) => setValue(value)}
             />
@@ -83,7 +90,10 @@ function Workspace() {
                 <span>Output</span>
               </div>
 
-              <button className="btn tracking-wider font-poppins font-light text-xl border-2 border-amber-50 rounded-none hover:bg-red-400 ">
+              <button
+                onClick={() => setOutputText("")}
+                className="btn tracking-wider font-poppins font-light text-xl border-2 border-amber-50 rounded-none hover:bg-red-400 "
+              >
                 Clear
               </button>
             </div>
@@ -115,6 +125,8 @@ function Workspace() {
                 name=""
                 id=""
                 placeholder="Enter your input here, if your program has any input."
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
               ></textarea>
             </div>
           </div>
