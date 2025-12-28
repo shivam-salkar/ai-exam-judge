@@ -4,9 +4,10 @@ import axios from "axios";
 import { auth } from "../src/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import {db} from "../src/firebase"
+import { db } from "../src/firebase";
 import { useEffect } from "react";
-
+import useTabSwitchAlert from "../src/components/useTabSwitchAlert";
+import QuestionCard from "../src/components/QuestionCard";
 
 function Workspace() {
   const [value, setValue] = useState("");
@@ -16,7 +17,7 @@ function Workspace() {
   const [userName, setUserName] = useState("");
   const [rollNo, setRollNo] = useState("");
   const [userEmail, setUserEmail] = useState("");
-
+  const [showQuestion, setShowQuestion] = useState(false);
 
   const isMobile = window.innerWidth < 768;
 
@@ -24,16 +25,18 @@ function Workspace() {
     setUserID(firebaseUser.uid);
   });
 
+  useTabSwitchAlert();
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) return;
-  
+
       const uid = firebaseUser.uid;
       setUserID(uid);
-  
+
       const ref = doc(db, "users", uid);
       const snap = await getDoc(ref);
-  
+
       if (snap.exists()) {
         const data = snap.data();
         setUserName(data.name);
@@ -41,10 +44,9 @@ function Workspace() {
         setUserEmail(data.email);
       }
     });
-  
+
     return () => unsub();
   }, []);
-  
 
   const runCode = async () => {
     try {
@@ -82,6 +84,24 @@ function Workspace() {
 
   return (
     <div className="p-5 h-screen">
+      <QuestionCard
+        open={showQuestion}
+        onClose={() => setShowQuestion(false)}
+      />
+
+      <div className="p-1 mb-3 font-mono font-bold flex flex-row items-center justify-baseline gap-10">
+        <div>
+          <h1 className="text-sm">Logged in as,</h1>
+          <div className="text-gray-400">
+            <h1 className="text-xl font-thin">
+              {rollNo}, {userName}
+            </h1>
+            <h1 className="text-sm font-thin">{userEmail}</h1>
+          </div>
+        </div>
+        
+      </div>
+
       {/* DIV FOR TWO SECTIONS */}
       <div className="flex flex-row">
         {/* MAIN EDITOR DIV */}
@@ -93,6 +113,12 @@ function Workspace() {
             </div>
 
             <div className="flex gap-4">
+              <button
+                onClick={() => setShowQuestion(true)}
+                className="btn tracking-wider font-poppins font-light text-xl border-2 border-amber-50 rounded-none bg-[#605DFF]"
+              >
+                Question
+              </button>
               <button
                 onClick={runCode}
                 className="btn  tracking-wider font-poppins font-light text-xl border-2 border-amber-50 rounded-none bg-[#605DFF]"
