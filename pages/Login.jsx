@@ -21,39 +21,43 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
+  
     if (!name || !roll || !email || !password) {
       setError("All fields are required");
       setLoading(false);
       return;
     }
-
+  
     let userCredential;
-
+  
     try {
+      // 1️⃣ Try signing in
       userCredential = await signInWithEmailAndPassword(
         auth,
         email,
         password
       );
-    } catch (err) {
-      if (err.code === "auth/user-not-found") {
+    } catch (signInError) {
+      try {
+        // 2️⃣ If sign-in fails, try registering
         userCredential = await createUserWithEmailAndPassword(
           auth,
           email,
           password
         );
-      } else {
-        setError(err.message);
+      } catch (signUpError) {
+        // 3️⃣ Real error (weak password, invalid email, etc.)
+        setError(signUpError.message);
         setLoading(false);
         return;
       }
     }
-
+  
     const uid = userCredential.user.uid;
     const ref = doc(db, "users", uid);
     const snap = await getDoc(ref);
-
+  
+    // 4️⃣ Create Firestore profile if new user
     if (!snap.exists()) {
       await setDoc(ref, {
         name,
@@ -63,10 +67,11 @@ export default function Login() {
         createdAt: new Date(),
       });
     }
-
-    navigate("/workspace");
+  
     setLoading(false);
+    navigate("/workspace");
   };
+
 
   return (
     <div className="h-screen flex items-center justify-center bg-base-200">
