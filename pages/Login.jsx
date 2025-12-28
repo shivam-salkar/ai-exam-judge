@@ -75,9 +75,9 @@ export default function Login() {
 
   return (
     <div className="h-screen flex items-center justify-center bg-base-200">
-      <div className="card w-96 bg-base-100 shadow-xl">
+      <div className="card w-102 bg-base-100 shadow-xl ">
         <div className="card-body">
-          <h2 className="text-center tracking-widest text-xl">
+          <h2 className="text-center tracking-widest text-3xl m-4 font-extrabold">
             LOGIN / SIGN UP
           </h2>
 
@@ -115,12 +115,20 @@ export default function Login() {
             />
 
             <button
-              className="btn btn-primary w-full"
+              className="btn btn-primary w-full text-2xl p-7 mt-3"
               disabled={loading}
             >
               {loading ? "Please wait..." : "Continue"}
             </button>
           </form>
+          
+          <div className="flex flex-row items-center text-center justify-center mt-4 gap-4 text-lg">
+            
+            <h1>Secured by </h1>
+            
+            <img width="24" height="24" src="https://img.icons8.com/external-tal-revivo-color-tal-revivo/24/external-firebase-a-googles-mobile-platform-that-helps-you-quickly-develop-high-quality-apps-logo-color-tal-revivo.png" alt="external-firebase-a-googles-mobile-platform-that-helps-you-quickly-develop-high-quality-apps-logo-color-tal-revivo"/>
+            
+          </div>
         </div>
       </div>
     </div>

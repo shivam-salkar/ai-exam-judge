@@ -55,18 +55,47 @@ function extractJSON(text) {
   return text.slice(start, end + 1);
 }
 
-
 export async function generateQuestion() {
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-lite",
-    contents: prompt,
-    generationConfig: {
-      temperature: 0.3,
-    },
-  });
+  // Removed server-side caching to ensure unique questions per user/session
+  try {
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt + `\n\nRandom seed: ${Date.now()}` }],
+          },
+        ],
+        config: { temperature: 0.8 },
+      });
+    } catch (e) {
+      console.warn("gemini-1.5-flash failed, trying gemini-1.5-flash-001");
+      response = await ai.models.generateContent({
+        model: "gemma-3-1b-it",
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt + `\n\nRandom seed: ${Date.now()}` }],
+          },
+        ],
+        config: { temperature: 0.8 },
+      });
+    }
 
-  const rawText = response.text;
-  const jsonText = extractJSON(rawText);
+    // Check if response.text is a function or property
+    const rawText =
+      typeof response.text === "function" ? response.text() : response.text;
 
-  return jsonText;
+    if (!rawText) {
+      throw new Error("Empty response from Gemini");
+    }
+
+    const jsonText = extractJSON(rawText);
+    return jsonText;
+  } catch (error) {
+    console.error("Gemini API Error:", error);
+    throw error;
+  }
 }
