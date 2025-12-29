@@ -319,7 +319,15 @@ function Workspace() {
       {/* END OF MAIN SECTION */}
       <footer className="w-full mt-6 py-3 px-4 flex flex-row items-center justify-between  text-gray-400 text-sm font-mono">
         <div>&copy; 2025 Created by Shivam</div>
-        <div>Powered by Gemini</div>
+        <div className="flex flex-row items-center gap-3">
+          <div>Powered by Gemini</div>
+          <img
+            width="24"
+            height="24"
+            src="https://img.icons8.com/color/48/bard--v1.png"
+            alt="bard--v1"
+          />
+        </div>
       </footer>
     </div>
   );
