@@ -99,3 +99,70 @@ export async function generateQuestion() {
     throw error;
   }
 }
+
+export async function evaluateSubmission(question, code, output) {
+  const evaluationPrompt = `
+You are an expert C programming examiner.
+Evaluate the following student submission based on the question provided.
+
+Question:
+${JSON.stringify(question, null, 2)}
+
+Student Code:
+${code}
+
+Student Output:
+${output}
+
+Rules:
+- Compare the code and output against the question requirements and constraints.
+- Assign marks out of ${question.marks || 5}.
+- Provide a brief, constructive review.
+- Output format (JSON only, no explanation, no markdown):
+{
+  "marks": number,
+  "review": "string"
+}
+`;
+
+  try {
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: evaluationPrompt }],
+          },
+        ],
+        config: { temperature: 0.3 },
+      });
+    } catch (e) {
+      console.warn("gemini-2.5-flash failed, trying gemma-3-1b-it");
+      response = await ai.models.generateContent({
+        model: "gemma-3-1b-it",
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: evaluationPrompt }],
+          },
+        ],
+        config: { temperature: 0.3 },
+      });
+    }
+
+    const rawText =
+      typeof response.text === "function" ? response.text() : response.text;
+
+    if (!rawText) {
+      throw new Error("Empty response from Gemini");
+    }
+
+    const jsonText = extractJSON(rawText);
+    return jsonText;
+  } catch (error) {
+    console.error("Gemini API Evaluation Error:", error);
+    throw error;
+  }
+}

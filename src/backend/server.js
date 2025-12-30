@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { generateQuestion } from "./questionGenerator.js";
+import { generateQuestion, evaluateSubmission } from "./questionGenerator.js";
 
 const app = express();
 app.use(cors());
@@ -24,6 +24,23 @@ app.get("/api/question", async (req, res) => {
   } catch (err) {
     console.error("Error generating question:", err);
     res.status(500).json({ error: "Failed to generate question" });
+  }
+});
+
+app.post("/api/submit", async (req, res) => {
+  const { question, code, output } = req.body;
+
+  if (!question || !code) {
+    return res.status(400).json({ error: "Missing question or code" });
+  }
+
+  try {
+    console.log("Evaluating submission...");
+    const evaluation = await evaluateSubmission(question, code, output);
+    res.json(JSON.parse(evaluation));
+  } catch (err) {
+    console.error("Error evaluating submission:", err);
+    res.status(500).json({ error: "Failed to evaluate submission" });
   }
 });
 

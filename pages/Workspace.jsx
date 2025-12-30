@@ -20,6 +20,12 @@ function Workspace() {
   const [userEmail, setUserEmail] = useState("");
   const [showQuestion, setShowQuestion] = useState(false);
 
+  // Submission State
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [evaluationResult, setEvaluationResult] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Exam State
   const [question, setQuestion] = useState(null);
   const [questionLoading, setQuestionLoading] = useState(false);
@@ -30,7 +36,7 @@ function Workspace() {
 
   const isMobile = window.innerWidth < 768;
 
-  useTabSwitchAlert();
+  // useTabSwitchAlert();
 
   const handleOpenQuestion = () => {
     setShowQuestion(true);
@@ -161,15 +167,34 @@ function Workspace() {
             content: value,
           },
         ],
-        stdin: inputText,
+        stdin: inputText || "",
       });
       const { run } = res.data;
       const combinedOutput = [run?.stdout, run?.stderr]
-        .filter(Boolean)
-        .join(run?.stdout && run?.stderr ? "\n" : "");
-      setOutputText(combinedOutput);
+        .filter((text) => text && text.trim() !== "")
+        .join("\n");
+      setOutputText(combinedOutput || "Program executed with no output.");
     } catch (error) {
       setOutputText("Error running code. \n " + error);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setShowConfirmModal(false);
+    setIsSubmitting(true);
+    try {
+      const res = await axios.post("http://localhost:3001/api/submit", {
+        question,
+        code: value,
+        output: outputText,
+      });
+      setEvaluationResult(res.data);
+      setShowResultModal(true);
+    } catch (error) {
+      console.error("Submission failed", error);
+      alert("Failed to submit. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -194,6 +219,75 @@ function Workspace() {
         examStarted={examStarted}
         onStartExam={handleStartExam}
       />
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-[#161a1f] p-8 rounded-2xl border border-gray-300 shadow-2xl max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4 text-white">
+              Confirm Submission
+            </h2>
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to submit your code? This will evaluate your
+              solution against the question.
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="btn btn-outline text-white border-gray-500 hover:bg-gray-700">
+                No, Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                className="btn bg-green-600 hover:bg-green-700 text-white border-none">
+                Yes, Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Result Modal */}
+      {showResultModal && evaluationResult && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-[#161a1f] p-8 rounded-2xl border border-gray-300 shadow-2xl max-w-2xl w-full">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-bold text-white">
+                Evaluation Result
+              </h2>
+              
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <span className="text-xl text-gray-400">Marks:</span>
+                <span className="text-4xl font-bold text-green-400">
+                  {evaluationResult.marks} / {question?.marks || 5}
+                </span>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  Review:
+                </h3>
+                <p className="text-gray-300 bg-black p-4 rounded-lg border border-gray-700 whitespace-pre-wrap">
+                  {evaluationResult.review}
+                </p>
+              </div>
+            </div>
+            <div className="mt-8 flex justify-end">
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Overlay */}
+      {isSubmitting && (
+        <div className="fixed inset-0 z-70 flex flex-col items-center justify-center bg-black bg-opacity-70">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="mt-4 text-xl font-semibold text-white">
+            Evaluating your submission...
+          </p>
+        </div>
+      )}
 
       <div className="p-1 mb-3 font-mono font-bold flex flex-row items-center justify-between gap-10">
         <div className="flex flex-row items-center gap-10">
@@ -248,7 +342,9 @@ function Workspace() {
                 className="btn  tracking-wider font-poppins font-light text-xl border-2 border-amber-50 rounded-none bg-[#605DFF]">
                 <span>Run</span>
               </button>
-              <button className="btn  tracking-wider font-poppins font-light text-xl border-2 border-amber-50 rounded-none bg-green-600">
+              <button
+                onClick={() => setShowConfirmModal(true)}
+                className="btn  tracking-wider font-poppins font-light text-xl border-2 border-amber-50 rounded-none bg-green-600">
                 <span>Submit</span>
               </button>
             </div>
