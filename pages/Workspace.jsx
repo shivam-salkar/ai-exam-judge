@@ -3,7 +3,14 @@ import { Editor } from "@monaco-editor/react";
 import axios from "axios";
 import { auth } from "../src/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import { db } from "../src/firebase";
 import useTabSwitchAlert from "../src/components/useTabSwitchAlert";
 import QuestionCard from "../src/components/QuestionCard";
@@ -188,7 +195,30 @@ function Workspace() {
         code: value,
         output: outputText,
       });
-      setEvaluationResult(res.data);
+      const evaluation = res.data;
+      setEvaluationResult(evaluation);
+
+      // Store in Firestore
+      try {
+        await addDoc(collection(db, "submissions"), {
+          userId: userID,
+          userName: userName,
+          rollNo: rollNo,
+          userEmail: userEmail,
+          question: question.question,
+          topic: question.topic,
+          code: value,
+          output: outputText,
+          marks: evaluation.marks,
+          totalMarks: question.marks || 5,
+          review: evaluation.review,
+          submittedAt: serverTimestamp(),
+        });
+        console.log("Submission saved to Firestore");
+      } catch (dbError) {
+        console.error("Error saving to Firestore:", dbError);
+      }
+
       setShowResultModal(true);
     } catch (error) {
       console.error("Submission failed", error);
@@ -255,7 +285,6 @@ function Workspace() {
               <h2 className="text-3xl font-bold text-white">
                 Evaluation Result
               </h2>
-              
             </div>
             <div className="space-y-4">
               <div className="flex items-center gap-4">
@@ -273,8 +302,7 @@ function Workspace() {
                 </p>
               </div>
             </div>
-            <div className="mt-8 flex justify-end">
-            </div>
+            <div className="mt-8 flex justify-end"></div>
           </div>
         </div>
       )}
