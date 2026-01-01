@@ -253,7 +253,7 @@ function Workspace() {
       {/* Confirmation Modal */}
       {showConfirmModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-[#161a1f] p-8 rounded-2xl border border-gray-300 shadow-2xl max-w-md w-full">
+          <div className="bg-[#161a1f] p-8 rounded-lg border border-gray-300 shadow-2xl max-w-md w-full">
             <h2 className="text-2xl font-bold mb-4 text-white">
               Confirm Submission
             </h2>

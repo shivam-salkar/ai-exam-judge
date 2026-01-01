@@ -13,12 +13,12 @@ export default function QuestionCard({
 
   return (
     <div className="fixed top-4 left-1/2 z-50 -translate-x-1/2 w-[90%] max-w-3xl">
-      <div className="card bg-base-100 shadow-xl border border-primary">
+      <div className="card bg-base-100 shadow-xl border  border-white">
         <div className="text-xl text-gray-400 card-body">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl text-white font-bold">📄 Question</h2>
             <button
-              className="btn btn-sm btn-circle btn-error text-2xl font-mono font-extrabold"
+              className="btn btn-sm border-amber-50 btn-circle btn-error text-2xl font-mono font-extrabold"
               onClick={onClose}>
               x
             </button>
@@ -40,7 +40,7 @@ export default function QuestionCard({
                 Good luck!
               </p>
               <button
-                className="btn btn-primary btn-lg font-bold tracking-wider"
+                className="btn btn-primary btn-lg border-amber-50 font-bold tracking-wider"
                 onClick={onStartExam}
                 disabled={loading || !!error}>
                 {loading ? (
