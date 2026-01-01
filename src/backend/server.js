@@ -31,6 +31,10 @@ app.post("/api/submit", async (req, res) => {
   const { question, code, output } = req.body;
 
   if (!question || !code) {
+    console.error("Submission failed: Missing question or code", {
+      hasQuestion: !!question,
+      hasCode: !!code,
+    });
     return res.status(400).json({ error: "Missing question or code" });
   }
 

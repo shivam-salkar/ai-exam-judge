@@ -1,9 +1,7 @@
 import "dotenv/config";
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
+const ai = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
 const prompt = `
 You are an experienced university-level C programming test paper setter.
@@ -58,35 +56,12 @@ function extractJSON(text) {
 export async function generateQuestion() {
   // Removed server-side caching to ensure unique questions per user/session
   try {
-    let response;
-    try {
-      response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt + `\n\nRandom seed: ${Date.now()}` }],
-          },
-        ],
-        config: { temperature: 0.8 },
-      });
-    } catch (e) {
-      console.warn("gemini-1.5-flash failed, trying gemini-1.5-flash-001");
-      response = await ai.models.generateContent({
-        model: "gemma-3-1b-it",
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt + `\n\nRandom seed: ${Date.now()}` }],
-          },
-        ],
-        config: { temperature: 0.8 },
-      });
-    }
-
-    // Check if response.text is a function or property
-    const rawText =
-      typeof response.text === "function" ? response.text() : response.text;
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(
+      prompt + `\n\nRandom seed: ${Date.now()}`
+    );
+    const response = await result.response;
+    const rawText = response.text();
 
     if (!rawText) {
       throw new Error("Empty response from Gemini");
@@ -126,34 +101,10 @@ Rules:
 `;
 
   try {
-    let response;
-    try {
-      response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: evaluationPrompt }],
-          },
-        ],
-        config: { temperature: 0.3 },
-      });
-    } catch (e) {
-      console.warn("gemini-2.5-flash failed, trying gemma-3-1b-it");
-      response = await ai.models.generateContent({
-        model: "gemma-3-1b-it",
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: evaluationPrompt }],
-          },
-        ],
-        config: { temperature: 0.3 },
-      });
-    }
-
-    const rawText =
-      typeof response.text === "function" ? response.text() : response.text;
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(evaluationPrompt);
+    const response = await result.response;
+    const rawText = response.text();
 
     if (!rawText) {
       throw new Error("Empty response from Gemini");

@@ -187,6 +187,15 @@ function Workspace() {
   };
 
   const handleSubmit = async () => {
+    if (!question) {
+      alert("Question not loaded. Please refresh the page.");
+      return;
+    }
+    if (!value || value.trim() === "") {
+      alert("Please write some code before submitting.");
+      return;
+    }
+
     setShowConfirmModal(false);
     setIsSubmitting(true);
     try {
